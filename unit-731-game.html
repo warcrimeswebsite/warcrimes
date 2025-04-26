@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Shiro Ishii: Choices of Unit 731</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500&display=swap" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Orbitron', sans-serif;
+      background-color: #111;
+      color: #b1a7a7;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+    .game-container {
+      max-width: 700px;
+      padding: 30px;
+      background-color: #1a1a1a;
+      border-radius: 12px;
+      box-shadow: 0 0 20px rgba(165, 187, 187, 0.2);
+      text-align: center;
+    }
+    img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+    h1 {
+      font-size: 26px;
+      margin-bottom: 10px;
+      color: rgb(228, 231, 233);
+    }
+    p {
+      font-size: 18px;
+      margin-bottom: 20px;
+      line-height: 1.5;
+    }
+    .choices a,
+    #restart-button a,
+    #source-link a {
+      display: inline-block;
+      margin: 10px;
+      padding: 10px 20px;
+      border: 2px solid rgb(231, 237, 240);
+      border-radius: 5px;
+      text-decoration: none;
+      color: rgb(238, 229, 229);
+      font-size: 16px;
+      transition: 0.3s;
+    }
+    .choices a:hover,
+    #restart-button a:hover,
+    #source-link a:hover {
+      background-color: rgb(255, 244, 244);
+      color: #111;
+    }
+  </style>
+</head>
+<body>
+
+<audio id="sfx-death" src="https://www.soundjay.com/human/sounds/man-scream-01.mp3"></audio>
+<audio id="sfx-win" src="https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3"></audio>
+<audio id="sfx-dramatic" src="https://www.soundjay.com/buttons/sounds/button-3.mp3"></audio>
+
+<div class="game-container">
+  <img id="scene-img" src="" alt="Scene">
+  <h1 id="scene-title"></h1>
+  <p id="scene-text"></p>
+  <div class="choices" id="choice-buttons"></div>
+  <div id="source-link"></div>
+  <div id="restart-button"></div>
+</div>
+
+<script>
+  const scenes = {
+    start: {
+      img: "https://upload.wikimedia.org/wikipedia/commons/9/9e/Shiro_Ishii_as_a_Lieutenant_Colonel_of_the_IJA.jpg",
+      title: "1936: The Offer",
+      text: "You are Shiro Ishii, a rising figure in the Japanese Imperial Army. You're offered command of a secret research division in Manchuria. Do you accept?",
+      choices: [
+        { text: "Accept", next: "accept" },
+        { text: "Refuse", next: "refuse" }
+      ]
+    },
+    accept: {
+      img: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/af/A_close_up_photo_of_the_Unit_731_square_building_taken_by_the_aviation_and_photography_class_of_Unit_731_in_1940.jpg/320px-A_close_up_photo_of_the_Unit_731_square_building_taken_by_the_aviation_and_photography_class_of_Unit_731_in_1940.jpg",
+      title: "Director of Unit 731",
+      text: "You accept the military’s offer. In Manchuria, you begin overseeing a facility that will test biological weapons on prisoners. Ethical lines are blurred quickly. Will you authorize human testing?",
+      choices: [
+        { text: "Begin experiments", next: "experiment" },
+        { text: "Resign", next: "resign" },
+        { text: "Question morality", next: "question-morality" }
+      ]
+    },
+    refuse: {
+      end: true,
+      img: "https://i.guim.co.uk/img/media/e79b140cba7de2c16f1146c37520670325c34d9f/0_63_1575_945/master/1575.jpg?width=1200&height=900&quality=85&auto=format&fit=crop&s=7d61402b07093b0d7fa4316f05f3dd5e",
+      title: "Frontline Fate",
+      text: "You refused the offer. Instead, you are sent to the front during the brutal invasion of Nanking. You do not return. Some fates are not easier than others.",
+      sound: "death"
+    },
+    resign: {
+      end: true,
+      img: "https://digitalcommons.law.lsu.edu/context/nuremberg_photos/article/1018/type/native/viewcontent",
+      title: "A Price for Conscience",
+      text: "You try to step away from the horrors of Unit 731, but the military cannot let you walk free. You’re arrested and silenced, your knowledge too dangerous to release.",
+      sound: "dramatic"
+    },
+    "question-morality": {
+      img: "https://i.guim.co.uk/img/media/d954da365ec496defb4edac5c69b1a879bee0673/0_0_1088_653/master/1088.jpg?width=1200&quality=85&auto=format&fit=max&s=3dc98893da3e744305778dbc97e3a6f4",
+      title: "The Morality Question",
+      text: "You hesitate, questioning the morality of what you're about to do. However, the pressure of the military looms large. Do you give in to the demands, or do you try to escape before it’s too late?",
+      choices: [
+        { text: "Give in", next: "experiment" },
+        { text: "Escape", next: "escape-morality" }
+      ]
+    },
+    experiment: {
+      img: "https://www.usni.org/sites/default/files/styles/embed_medium/public/Polmar-NH-SO-20%202.jpg?itok=tYRDjFm5",
+      title: "Human Trials Begin",
+      text: "Vivisections. Infections. Thousands suffer in your lab, and your data proves devastatingly effective. The war nears its end—do you attempt to escape or stay and face consequences?",
+      choices: [
+        { text: "Flee to the U.S.", next: "escape" },
+        { text: "Confess", next: "trial" }
+      ]
+    },
+    escape: {
+      end: true,
+      img: "https://warfarehistorynetwork.com/wp-content/uploads/2017/06/african-americans-wwii-001_crop.jpg",
+      title: "Protected by Power",
+      text: "You surrender your research to U.S. forces in exchange for immunity. You escape justice, your crimes buried for Cold War convenience.",
+      sound: "win"
+    },
+    "escape-morality": {
+      end: true,
+      img: "https://bestflag.com/cdn/shop/articles/What_Does_a_Black_and_White_American_Flag_Mean_5244x.png?v=1646359936",
+      title: "Escape to Freedom",
+      text: "You flee, but the guilt of what you left behind haunts you for the rest of your life. The escape comes at a great personal cost.",
+      sound: "win"
+    },
+    trial: {
+      end: true,
+      img: "https://upload.wikimedia.org/wikipedia/commons/c/cc/IMTFE_court_chamber_2.jpg",
+      title: "Justice at Tokyo",
+      text: "You choose to testify at the Tokyo War Crimes Tribunal. The world learns of Unit 731. You are sentenced to life in prison.",
+      sound: "death"
+    }
+  };
+
+  function makeChoice(id) {
+    const scene = scenes[id];
+    if (!scene) return;
+    document.getElementById("scene-img").src = scene.img;
+    document.getElementById("scene-title").textContent = scene.title;
+    document.getElementById("scene-text").textContent = scene.text;
+
+    const choicesDiv = document.getElementById("choice-buttons");
+    const sourceDiv = document.getElementById("source-link");
+    const restartDiv = document.getElementById("restart-button");
+
+    choicesDiv.innerHTML = "";
+    restartDiv.innerHTML = "";
+
+    if (scene.end) {
+      sourceDiv.innerHTML = `<a href="japan-war-crimes.html" target="_blank">Learn more</a>`;
+      restartDiv.innerHTML = `<a href="index.html">Restart</a>`;
+      playSound(scene.sound);
+    } else {
+      scene.choices.forEach(c => {
+        const btn = document.createElement('a');
+        btn.href = "javascript:void(0);";
+        btn.textContent = c.text;
+        btn.onclick = () => makeChoice(c.next);
+        choicesDiv.appendChild(btn);
+      });
+      sourceDiv.innerHTML = `<a href="japan-war-crimes.html" target="_blank">Learn more</a>`;
+    }
+  }
+
+  function playSound(type) {
+    if (type === 'death') document.getElementById("sfx-death").play();
+    else if (type === 'win') document.getElementById("sfx-win").play();
+    else if (type === 'dramatic') document.getElementById("sfx-dramatic").play();
+  }
+
+  window.onload = () => {
+    makeChoice('start');
+  };
+</script>
+
+</body>
+</html>
